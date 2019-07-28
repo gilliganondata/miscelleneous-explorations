@@ -34,7 +34,7 @@ We're going to stick with something of a reasonable air temperature range (we're
 
 First, we'll convert Fahrenheit to Celsius using the actual conversion formula and the shortcut formula:
 
-```{r fig.height=6, fig.width=6, echo=FALSE}
+```{r fig.height=6, fig.width=6, echo=FALSE, message=FALSE}
 # We can do all of this with dplyr and ggplot2, both of which are included in 
 # the tidyverse package, so let's load that up.
 library(tidyverse)
@@ -177,3 +177,5 @@ The shortcut formula works, but, to be a bit more accurate (without having to do
 * If converting to Fahrenheit from Celsius, then say, "a bit over _[the shorcut calculation result]_"
 
 And I've already forgotten which is which.
+
+The R code used to build this silly little analysis is available at https://github.com/gilliganondata/miscelleneous-explorations.
