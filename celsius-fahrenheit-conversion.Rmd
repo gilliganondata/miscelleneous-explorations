@@ -177,3 +177,5 @@ The shortcut formula works, but, to be a bit more accurate (without having to do
 * If converting to Fahrenheit from Celsius, then say, "a bit over _[the shorcut calculation result]_"
 
 And I've already forgotten which is which.
+
+The R code used to build this silly little analysis is available at https://github.com/gilliganondata/miscelleneous-explorations.
