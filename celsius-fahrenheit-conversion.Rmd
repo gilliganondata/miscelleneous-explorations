@@ -1,0 +1,179 @@
+---
+title: "Fahrenheit to Celsius - Quick Calculation vs. Actual"
+output: html_notebook
+---
+
+While traveling to Australia earlier this year, a cab driver taught me a quick Celsius-to-Fahrenheit conversion trick:
+
+>"Double the temperature and add 20 degrees."
+
+Because I'm good with the math, that means converting from Fahrenheit to Celsius would be:
+
+>"Subtract 20 degrees and divide by 2."
+
+A quick inspection of the actual conversion formulas---be they derived or simply looked up---shows why this trick works pretty well:
+
+<center>$F^\circ = \frac{9}{5}C^\circ+32$</center>
+
+and
+
+<center>$C^\circ = \frac{5}{9}(F^\circ-32)$</center>
+
+The $\frac{9}{5}$ is a bit less than 2, which we correct for by adding only 20 (instead of 32) and, conversely, $\frac{5}{9}$ is a bit more than `0.5`, which we compensate for by subtracting only 20 (instead of 32).
+
+For no good reason whatsoever, I wanted to see two things:
+
+1. At what point---if any---does this shortcut actually work perfectly?
+2. How far away from that perfect point can we go before that estimating technique really breaks down?
+
+This could be an algebra problem...but why not make it a brute force visualization problem instead?
+
+We're going to stick with something of a reasonable air temperature range (we're not boiling water or burning paper) for this exploration. As a matter of fact, we'll just estimate the coldest and warmest temperatures I've personally experienced.
+
+## Converting Fahrenheit to Celsius
+
+First, we'll convert Fahrenheit to Celsius using the actual conversion formula and the shortcut formula:
+
+```{r fig.height=6, fig.width=6, echo=FALSE}
+# We can do all of this with dplyr and ggplot2, both of which are included in 
+# the tidyverse package, so let's load that up.
+library(tidyverse)
+
+# Define a theme
+theme_base <- theme_light() +
+  theme(axis.ticks = element_blank(),
+        axis.line.x.bottom = element_line(),
+        axis.line.y.left = element_line(),
+        axis.text = element_text(size = 8, color = "gray50"),
+        plot.title = element_text(hjust = 0.5, size = 14),
+        panel.border = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = "top",
+        legend.title = element_blank(),
+        legend.text = element_text(size = 10))
+
+# Create a Fahrenheit-to-Celsius data frame that uses both calculations
+f_to_c_df <- data.frame(Fahrenheit = seq(-20, 110)) %>% 
+  mutate(Actual = 5/9 * (Fahrenheit - 32),
+         `Shortcut Calculation: 0.5 * (F - 20)` = 0.5 * (Fahrenheit - 20)) %>% 
+  mutate(Difference = `Shortcut Calculation: 0.5 * (F - 20)` - Actual) %>% 
+  gather(key = "Conversion Type", value = "Celsius", -Fahrenheit)
+
+# Plot the comparisons.
+f_to_c_compare_df <- f_to_c_df %>% 
+  filter(`Conversion Type` != "Difference")
+
+gg <- ggplot(f_to_c_compare_df, aes(x = Fahrenheit, y = Celsius, color = `Conversion Type`,
+                                    size = `Conversion Type`, linetype = `Conversion Type`)) +
+  geom_line() +
+  labs(title = "Fahrenheit to Celsius Comparison") + 
+  scale_x_continuous(breaks=seq(-20, 110, 5)) +
+  scale_y_continuous(breaks=seq(-30, 45, 5)) +
+  scale_color_manual(values = c("gray40", "#1c9e3f")) +
+  scale_size_manual(values = c(0.5,1)) +
+  scale_linetype_manual(values = c("dashed", "solid")) +
+  theme_base
+
+gg
+
+# Remove the data frame used for the plot
+rm(f_to_c_compare_df)
+
+```
+
+The lines never cross...but they would if we went up to 140 F$^\circ$ (which would be 60 C$^\circ$ if you're playing along at home).
+
+Perhaps a better way to visualize this would be as the _difference_ between the shortcut-calculated temperature and the actual temperature:
+
+```{r fig.height=4, fig.width=6, echo=FALSE}
+
+# Plot the comparisons.
+f_to_c_difference_df <- f_to_c_df %>% 
+  filter(`Conversion Type` == "Difference")
+
+gg <- ggplot(f_to_c_difference_df, aes(x = Fahrenheit, y = Celsius)) +
+  geom_line(color = "#9542f5") +
+  labs(title = "Difference in the Shortcut Calculation vs. Actual Temperature") + 
+  scale_x_continuous(breaks=seq(-20, 110, 5)) +
+  scale_y_continuous(breaks=seq(0, 10, 0.5)) +
+  theme_base
+
+gg
+
+# Remove the data frame used for the plot
+rm(f_to_c_difference_df)
+
+```
+
+So, basically, this tells us that, in the summer months, if an American is converting his Fahrenheit temperature to Celsius with this shortcut method, he'll almost certainly be _overstating_ the temperature, but just by 1-4 degrees. In the winter, that overstatement will be more like 4 to 8 degrees.
+
+## Converting Celsius to Fahrenheit
+
+Now, let's convert Celsius to Fahrenheit and do the same comparison:
+
+```{r fig.height=6, fig.width=6, echo=FALSE}
+
+# Create a Fahrenheit-to-Celsius data frame that uses both calculations
+c_to_f_df <- data.frame(Celsius = seq(-30, 45)) %>% 
+  mutate(Actual = 9/5 * Celsius + 32,
+         `Shortcut Calculation: 2 * C + 20` = 2 * Celsius + 20) %>% 
+  mutate(Difference = `Shortcut Calculation: 2 * C + 20` - Actual) %>% 
+  gather(key = "Conversion Type", value = "Fahrenheit", -Celsius)
+
+# Plot the comparisons.
+c_to_f_compare_df <- c_to_f_df %>% 
+  filter(`Conversion Type` != "Difference")
+
+gg <- ggplot(c_to_f_compare_df, aes(x = Celsius, y = Fahrenheit, color = `Conversion Type`,
+                                    size = `Conversion Type`, linetype = `Conversion Type`)) +
+  geom_line() +
+  labs(title = "Celsius to Fahrenheit Comparison") + 
+  scale_y_continuous(breaks=seq(-40, 115, 5)) +
+  scale_x_continuous(breaks=seq(-30, 45, 5)) +
+  scale_color_manual(values = c("gray40", "#1c9e3f")) +
+  scale_size_manual(values = c(0.5,1)) +
+  scale_linetype_manual(values = c("dashed", "solid")) +
+  
+  theme_base
+
+gg
+
+# Remove the data frame used for the plot
+rm(c_to_f_compare_df)
+
+```
+
+The lines never cross...but they would if we went up to 60 C$^\circ$ (140 F$^\circ$).
+
+Let's now look at this as the _difference_ between the shortcut-calculated temperature and the actual temperature:
+
+```{r fig.height=4, fig.width=6, echo=FALSE}
+
+# Plot the comparisons.
+c_to_f_difference_df <- c_to_f_df %>% 
+  filter(`Conversion Type` == "Difference")
+
+gg <- ggplot(c_to_f_difference_df, aes(x = Celsius, y = Fahrenheit)) +
+  geom_line(color = "#9542f5") +
+  labs(title = "Difference in the Shortcut Calculation vs. Actual Temperature") + 
+  scale_x_continuous(breaks=seq(-30, 110, 5)) +
+  scale_y_continuous(breaks=seq(-20, 10, 1)) +
+  theme_base
+
+gg
+
+# Remove the data frame used for the plot
+rm(c_to_f_difference_df)
+
+```
+
+So, basically, this tells us that, in the summer months, if a non-American is converting his Celsius temperature to Fahrenheit with the shortcut method, he'll almost certainly be _understating_ the temperature, but just by 3-7 degrees. In the winter, that overstatement will be more like 8-15 degrees.
+
+## The Conclusion
+
+The shortcut formula works, but, to be a bit more accurate (without having to do math that involves odd numbers in fractions), the shortcut conversion should be qualified:
+
+* If converting to Celsius from Fahrenheit, then say, "a bit under _[the shortcut calculation result]_"
+* If converting to Fahrenheit from Celsius, then say, "a bit over _[the shorcut calculation result]_"
+
+And I've already forgotten which is which.
